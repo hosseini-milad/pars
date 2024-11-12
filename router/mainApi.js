@@ -28,6 +28,9 @@ const updateLog = require('../models/product/updateLog');
 const state = require('../models/main/state');
 const city = require('../models/main/city');
 const quickCart = require('../models/product/quickCart');
+const Invoice = require('../models/sepidar/invoices');
+const InvoiceItem = require('../models/sepidar/invoiceItems');
+const dashboard = require ('./dashboard');
 const { ONLINE_URL} = process.env;
  
 router.get('/main', async (req,res)=>{
@@ -56,6 +59,7 @@ router.use('/panel/user', panelUserApi)
 router.use('/panel/order', panelOrderApi)
 router.use('/panel/product', panelProductApi)
 router.use('/panel/faktor', panelFaktorApi)
+router.use('/dashboard', dashboard)
 
 router.use('/panel/crm',CRMPanelApi)
 schedule.scheduleJob('5 */2 * * *', async() => { 
@@ -66,6 +70,8 @@ schedule.scheduleJob('5 */2 * * *', async() => {
     response = await fetch(ONLINE_URL+"/sepidar-quantity",
         {method: 'GET'});
     response = await fetch(ONLINE_URL+"/sepidar-customer",
+        {method: 'GET'});
+    response = await fetch(ONLINE_URL+"/sepidar-invoices",
         {method: 'GET'});
  })
  schedule.scheduleJob('00 00 12 * * 0-6', async() => { 
@@ -129,81 +135,121 @@ router.get('/sepidar-product', async (req,res)=>{
         res.status(500).json({message: error.message})
     }
 })
-router.get('/sepidar-customer', async (req,res)=>{
-    const url=req.body.url
-    try{
-        const sepidarResult = await sepidarFetch("data","/api/Customers")
- 
-        if(sepidarResult.error||!sepidarResult.length){
-            res.json({error:"error occure",
-                data:sepidarResult,message:"خطا در بروزرسانی"})
-            return
-        }
-        var newCustomer = 0;
-        var updateCustomer = 0
-        var notUpdateCustomer = 0
-        
-    for(var i = 0;i<sepidarResult.length;i++){
-        const custResult = await customers.updateOne({
-            phone:sepidarResult[i].PhoneNumber,
-            meliCode:sepidarResult[i].NationalID
-        },{$set:{
-            username: sepidarResult[i].Title,
-            cName: sepidarResult[i].Name,
-            sName: sepidarResult[i].LastName,
-            meliCode: sepidarResult[i].NationalID,
-            email: sepidarResult[i].Code+"@sharifoilco.com",
-            access:"customer",
-            cCode:sepidarResult[i].Code,
-            CustomerID:sepidarResult[i].CustomerID,
-            AddressID:(sepidarResult[i].Addresses&&sepidarResult[i].Addresses[0])?
-                sepidarResult[i].Addresses[0].CustomerAddressID:'',
-            Address:(sepidarResult[i].Addresses&&sepidarResult[i].Addresses[0])?
-                sepidarResult[i].Addresses[0].Address:'',
-            postalCode:(sepidarResult[i].Addresses&&sepidarResult[i].Addresses[0])?
-            sepidarResult[i].Addresses[0].ZipCode:''
-        }})
-        var modified = custResult.modifiedCount
-        var matched = custResult.matchedCount
-        if(matched){ notUpdateCustomer++}
-        if(modified){updateCustomer++}
-        if(!matched){
-            await customers.create({
-                username: sepidarResult[i].Title,
-                cName: sepidarResult[i].Name,
-                sName: sepidarResult[i].LastName,
-                phone: sepidarResult[i].PhoneNumber,
-                meliCode: sepidarResult[i].NationalID,
-                email: sepidarResult[i].Code+"@sharifoilco.com",
-                access:"customer",
-                cCode:sepidarResult[i].Code,
-                CustomerID:sepidarResult[i].CustomerID,
-                AddressID:(sepidarResult[i].Addresses&&sepidarResult[i].Addresses[0])?
-                    sepidarResult[i].Addresses[0].CustomerAddressID:'',
-                Address:(sepidarResult[i].Addresses&&sepidarResult[i].Addresses[0])?
-                    sepidarResult[i].Addresses[0].Address:'',
-                PostalCode:(sepidarResult[i].Addresses&&sepidarResult[i].Addresses[0])?
-                sepidarResult[i].Addresses[0].ZipCode:'',
-                date:new Date()})
-            newCustomer++
+router.get('/sepidar-customer', async (req, res) => {
+    const url = req.body.url;
+    try {
+        const sepidarResult = await sepidarFetch("data", "/api/Customers");
 
+        if (sepidarResult.error || !sepidarResult.length) {
+            res.json({
+                error: "Error occurred",
+                data: sepidarResult,
+                message: "خطا در بروزرسانی"
+            });
+            return;
         }
-    }
-        
+
+        let newCustomer = 0;
+        let updateCustomer = 0;
+        let notUpdateCustomer = 0;
+
+        for (let i = 0; i < sepidarResult.length; i++) {
+            const customerData = sepidarResult[i];
+            const meliCode = customerData.NationalID;  // NationalID (meliCode)
+
+            // Handle missing or invalid meliCode
+            if (!meliCode) {
+                console.log(`Skipping customer due to missing meliCode:`, customerData);
+                notUpdateCustomer++;  // Increment count for missing meliCode
+                continue;  // Skip this iteration if meliCode is invalid
+            }
+
+            // First, check if a customer with the same meliCode already exists
+            const existingCustomer = await customers.findOne({ meliCode });
+
+            if (existingCustomer) {
+                // Update the customer if the meliCode already exists
+                const custResult = await customers.updateOne(
+                    { phone: customerData.PhoneNumber, meliCode },
+                    {
+                        $set: {
+                            username: customerData.Title,
+                            cName: customerData.Name,
+                            sName: customerData.LastName,
+                            meliCode,
+                            email: `${customerData.Code}@sharifoilco.com`,
+                            access: "customer",
+                            cCode: customerData.Code,
+                            CustomerID: customerData.CustomerID,
+                            AddressID: (customerData.Addresses && customerData.Addresses[0])
+                                ? customerData.Addresses[0].CustomerAddressID
+                                : '',
+                            Address: (customerData.Addresses && customerData.Addresses[0])
+                                ? customerData.Addresses[0].Address
+                                : '',
+                            postalCode: (customerData.Addresses && customerData.Addresses[0])
+                                ? customerData.Addresses[0].ZipCode
+                                : ''
+                        }
+                    }
+                );
+
+                const modified = custResult.modifiedCount;
+                const matched = custResult.matchedCount;
+
+                if (matched) {
+                    notUpdateCustomer++;
+                }
+                if (modified) {
+                    updateCustomer++;
+                }
+            } else {
+                // If no existing customer with the same meliCode, create a new one
+                await customers.create({
+                    username: customerData.Title,
+                    cName: customerData.Name,
+                    sName: customerData.LastName,
+                    phone: customerData.PhoneNumber,
+                    meliCode,  // Ensure meliCode is valid here
+                    email: `${customerData.Code}@sharifoilco.com`,
+                    access: "customer",
+                    cCode: customerData.Code,
+                    CustomerID: customerData.CustomerID,
+                    AddressID: (customerData.Addresses && customerData.Addresses[0])
+                        ? customerData.Addresses[0].CustomerAddressID
+                        : '',
+                    Address: (customerData.Addresses && customerData.Addresses[0])
+                        ? customerData.Addresses[0].Address
+                        : '',
+                    PostalCode: (customerData.Addresses && customerData.Addresses[0])
+                        ? customerData.Addresses[0].ZipCode
+                        : '',
+                    date: new Date()
+                });
+                newCustomer++;
+            }
+        }
+
+        // Log update activity
         await updateLog.create({
-            updateQuery: "sepidar-customer" ,
-            date:Date.now()
-        })
-        res.json({sepidar:{
-            newCustomer:newCustomer,
-            updateCustomer:updateCustomer,
-            notUpdateCustomer:notUpdateCustomer
-        },message:"کاربران بروز شدند"})
+            updateQuery: "sepidar-customer",
+            date: Date.now()
+        });
+
+        // Respond with success message and summary
+        res.json({
+            sepidar: {
+                newCustomer,
+                updateCustomer,
+                notUpdateCustomer
+            },
+            message: "کاربران بروز شدند"
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-    catch(error){
-        res.status(500).json({message: error.message})
-    }
-})
+});
+
 router.get('/sepidar-price', async (req,res)=>{
     try{
         const sepidarPriceResult = await sepidarFetch("data","/api/PriceNoteItems")
@@ -366,6 +412,8 @@ router.get('/sepidar-all', async (req,res)=>{
             {method: 'GET'});
         response = await fetch(ONLINE_URL+"/sepidar-bank",
             {method: 'GET'});
+        response = await fetch(ONLINE_URL+"/sepidar-invoices",
+            {method: 'GET'});
         res.json({message:"تمامی جدول ها بروز شدند"})
     }
     catch(error){
@@ -383,4 +431,140 @@ router.get('/sepidar-update-log', async (req,res)=>{
     }
 })
 
+router.get('/sepidar-invoices', async (req, res) => {
+    try {
+        const sepidarInvoiceResult = await sepidarFetch("data", "/api/Invoices");
+
+        if (sepidarInvoiceResult.error || !sepidarInvoiceResult.length) {
+            res.json({ error: "Error occurred", data: sepidarInvoiceResult, message: "خطا در بروزرسانی" });
+            return;
+        }
+
+        let newInvoiceCount = 0;
+        let updateInvoiceCount = 0;
+
+        for (let i = 0; i < sepidarInvoiceResult.length; i++) {
+            const invoiceData = sepidarInvoiceResult[i];
+            const existingInvoice = await Invoice.findOne({ InvoiceID: invoiceData.InvoiceID });
+
+            if (existingInvoice) {
+                const updateResult = await Invoice.updateOne(
+                    { InvoiceID: invoiceData.InvoiceID },
+                    { $set: invoiceData }
+                );
+
+                if (updateResult.modifiedCount) {
+                    updateInvoiceCount++;
+                }
+            } else {
+                await Invoice.create(invoiceData);
+                newInvoiceCount++;
+            }
+        }
+
+        await updateLog.create({
+            updateQuery: "sepidar-invoices",
+            date: Date.now(),
+        });
+
+        res.json({
+            sepidar: {
+                newInvoiceCount,
+                updateInvoiceCount,
+            },
+            message: "فاکتورها بروز شدند",
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/get-all-invoices', async (req, res) => {
+    try {
+        // Step 1: Find all invoices
+        const invoices = await Invoice.find();
+
+        if (!invoices.length) {
+            return res.status(404).json({ message: "No invoices found" });
+        }
+
+        // Step 2: Loop through each invoice and get additional data from the external API
+        for (const invoice of invoices) {
+            const invoiceId = invoice.InvoiceID;
+            // Fetch data from /api/invoices/<InvoiceId> API
+            const invoiceData = await fetchInvoiceData(invoiceId);
+
+            if (invoiceData) {
+                // Step 3: Prepare the full invoice document with nested InvoiceItems
+                const invoiceDocument = {
+                    InvoiceID: invoiceData.InvoiceID,
+                    OrderRef: invoiceData.OrderRef,
+                    QuotationRef: invoiceData.QuotationRef,
+                    Number: invoiceData.Number,
+                    Date: new Date(invoiceData.Date),  // Convert the string to a Date object
+                    CustomerRef: invoiceData.CustomerRef,
+                    CurrencyRef: invoiceData.CurrencyRef,
+                    Rate: invoiceData.Rate,
+                    SaleTypeRef: invoiceData.SaleTypeRef,
+                    AddressRef: invoiceData.AddressRef,
+                    Price: invoiceData.Price,
+                    Tax: invoiceData.Tax,
+                    Duty: invoiceData.Duty,
+                    Discount: invoiceData.Discount,
+                    Addition: invoiceData.Addition,
+                    NetPrice: invoiceData.NetPrice,
+                    Agreements: invoiceData.Agreements,
+                    // The InvoiceItems are directly inserted as an array of objects
+                    InvoiceItems: invoiceData.InvoiceItems.map(item => ({
+                        InvoiceItemID: item.InvoiceItemID,
+                        ItemRef: item.ItemRef,
+                        TracingRef: item.TracingRef,
+                        TracingTitle: item.TracingTitle,
+                        Quantity: item.Quantity,
+                        SecondaryQuantity: item.SecondaryQuantity,
+                        Fee: item.Fee,
+                        Price: item.Price,
+                        Discount: item.Discount,
+                        Tax: item.Tax,
+                        Duty: item.Duty,
+                        Addition: item.Addition,
+                        NetPrice: item.NetPrice,
+                        DiscountInvoiceItemRef: item.DiscountInvoiceItemRef,
+                        ProductPackRef: item.ProductPackRef,
+                        ProductPackQuantity: item.ProductPackQuantity,
+                        Description: item.Description,
+                        IsAggregateDiscountInvoiceItem: item.IsAggregateDiscountInvoiceItem,
+                        SaleGroupRef: item.SaleGroupRef,
+                        PurchaseGroupRef: item.PurchaseGroupRef,
+                        InvoiceID: item.InvoiceID  // Set to the current invoice's ID
+                    }))
+                };
+
+        
+                // Step 4: Insert the full invoice document (with nested InvoiceItems) into MongoDB
+                await InvoiceItem.create(invoiceDocument);
+
+                console.log(`Invoice ${invoiceData.InvoiceID} saved with InvoiceItems.`);
+            }
+        }
+
+        // Respond with success message
+        res.json({ message: "Invoices and InvoiceItems updated successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+async function fetchInvoiceData(invoiceId) {
+    try {
+        // Use any method to make the API call (e.g., axios, fetch)
+        // Here we're using `fetch` as an example
+        const response = await sepidarFetch("data", `/api/invoices/${invoiceId}`);
+        return response; 
+
+    } catch (error) {
+        console.error(`Error fetching invoice data for InvoiceID: ${invoiceId}`, error);
+        return null;
+    }
+}
 module.exports = router;

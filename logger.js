@@ -1,6 +1,8 @@
 var express = require('express');
 require("dotenv").config();
 require("./middleware/database").connect();
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
 var expressWinston = require('express-winston');
 var winston = require('winston'); // for transports.Console
 const bodyParser = require('body-parser');
@@ -137,7 +139,43 @@ app.use(expressWinston.errorLogger({
   )
 }));
 app.use('/uploads', express.static('uploads'));
-// Optionally you can include your custom error handler after the logging.
+
+
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0', // Specify OpenAPI version
+    info: {
+      title: 'API Documentation',
+      version: '1.0.0',
+      description: 'API documentation for the dashboard endpoints',
+    },
+    servers: [
+      {
+        url: 'http://localhost:4030/api/dashboard',
+      },
+    ],
+    components: {
+      securitySchemes: {
+        ApiKeyAuth: {
+          type: 'apiKey',       // Define the type of security scheme
+          in: 'header',         // Specify that the API key is in the header
+          name: 'x-access-token', // Name of the header to be used
+          description: 'Enter your API key here',
+        },
+      },
+    },
+    security: [
+      {
+        ApiKeyAuth: [], // Apply the security scheme globally
+      },
+    ],
+  },
+  apis: ['./router/dashboard.js'],
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 
 app.listen(port, function(){
   console.log("logger listening on port %d in %s mode", this.address().port, app.settings.env);
