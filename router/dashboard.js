@@ -94,7 +94,7 @@ router.get('/top-products',auth, async (req, res) => {
  *                     description: Total quantity sold
  */
 
-router.get('/lowest-products', async (req, res) => {
+router.get('/lowest-products',auth, async (req, res) => {
     try {
         const lowestProducts = await invoiceItems.aggregate([
             { $unwind: "$InvoiceItems" },
