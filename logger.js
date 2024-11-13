@@ -143,7 +143,7 @@ app.use('/uploads', express.static('uploads'));
 
 const swaggerOptions = {
   swaggerDefinition: {
-    dashboard: '3.0.0', 
+    openapi: '1.0.0',
     info: {
       title: 'API Documentation',
       version: '1.0.0',
