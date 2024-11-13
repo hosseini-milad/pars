@@ -151,7 +151,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:4030/api/dashboard',
+        url: 'https://parsadmin.dkmehr.com/api/dashboard',
       },
     ],
     components: {
