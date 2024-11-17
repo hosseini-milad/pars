@@ -80,7 +80,7 @@ router.get('/lowest-products',auth, async (req, res) => {
 });
 
 
-router.get('/branch-stats', async (req, res) => {
+router.get('/branch-stats',auth, async (req, res) => {
     try {
         // Get distinct branchIds
         const distinctBranches = await cart.distinct("branchId");
@@ -115,10 +115,10 @@ router.get('/branch-stats', async (req, res) => {
     }
 });
 
-router.get('/product-categories', async (req, res) => {
+router.get('/product-categories',auth, async (req, res) => {
     try {
         // Aggregate query to join products with categories
-        const productCategories = await Products.aggregate([
+        const productCategories = await products.aggregate([
             {
                 $lookup: {
                     from: "categories", // Collection to join
@@ -147,7 +147,7 @@ router.get('/product-categories', async (req, res) => {
     }
 });
 
-router.get('/category-product-counts', async (req, res) => {
+router.get('/category-product-counts',auth, async (req, res) => {
     try {
         // Aggregate query to join products with categories and count products per category
         const categoryProductCounts = await products.aggregate([
