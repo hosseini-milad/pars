@@ -2,45 +2,22 @@ const express = require('express');
 const router = express.Router();
 const invoiceItems = require('../models/sepidar/invoiceItems');
 const products = require('../models/product/products'); 
+const categories = require('../models/product/category');
 const auth = require("../middleware/auth");
-const cart = require('../models/product/cart');
 
-const getTimeRangeFilter = (time) => {
-    const now = new Date();
-    switch (time) {
-        case "day":
-            return { $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) };
-        case "week":
-            const weekAgo = new Date(now);
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            return { $gte: weekAgo };
-        case "month":
-            return { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };
-        case "year":
-            return { $gte: new Date(now.getFullYear(), 0, 1) };
-        case "all":
-        default:
-            return {};
-    }
-};
 
-router.get('/top-products', auth, async (req, res) => {
+
+router.get('/top-products',auth, async (req, res) => {
     try {
-        const { time = "all" } = req.query;
-        const dateFilter = getTimeRangeFilter(time);
-
         const topProducts = await invoiceItems.aggregate([
-            { 
-                $match: dateFilter ? { "InvoiceDate": dateFilter } : {} // Filter by time range if applicable
-            },
             { $unwind: "$InvoiceItems" },
             {
                 $group: {
                     _id: "$InvoiceItems.ItemRef", 
-                    totalQuantitySold: { $sum: "$InvoiceItems.Quantity" }
+                    totalQuantitySold: { $sum: "$InvoiceItems.Quantity" } // Sum quantities within InvoiceItems
                 }
             },
-            { $sort: { totalQuantitySold: -1 } },
+            { $sort: { totalQuantitySold: -1 } }, 
             { $limit: 5 }
         ]);
 
@@ -56,7 +33,7 @@ router.get('/top-products', auth, async (req, res) => {
             return {
                 ItemID: item._id,
                 title: product ? product.title : "Unknown Product",
-                totalQuantitySold: item.totalQuantitySold
+                totalQuantitySold: item.totalQuantitySold // Include total quantity sold in the response
             };
         });
 
@@ -66,24 +43,18 @@ router.get('/top-products', auth, async (req, res) => {
     }
 });
 
-router.get('/lowest-products', auth, async (req, res) => {
+router.get('/lowest-products',auth, async (req, res) => {
     try {
-        const { time = "all" } = req.query;
-        const dateFilter = getTimeRangeFilter(time);
-
         const lowestProducts = await invoiceItems.aggregate([
-            { 
-                $match: dateFilter ? { "InvoiceDate": dateFilter } : {} 
-            },
             { $unwind: "$InvoiceItems" },
             {
                 $group: {
                     _id: "$InvoiceItems.ItemRef", 
-                    totalQuantitySold: { $sum: "$InvoiceItems.Quantity" }
+                    totalQuantitySold: { $sum: "$InvoiceItems.Quantity" } 
                 }
             },
-            { $sort: { totalQuantitySold: 1 } },
-            { $limit: 5 }
+            { $sort: { totalQuantitySold: 1 } }, 
+            { $limit: 5 } 
         ]);
 
         const productIds = lowestProducts.map(item => item._id);
@@ -98,7 +69,7 @@ router.get('/lowest-products', auth, async (req, res) => {
             return {
                 ItemID: item._id,
                 title: product ? product.title : "Unknown Product",
-                totalQuantitySold: item.totalQuantitySold
+                totalQuantitySold: item.totalQuantitySold // Include total quantity sold in the response
             };
         });
 
@@ -107,6 +78,7 @@ router.get('/lowest-products', auth, async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 router.get('/branch-stats', async (req, res) => {
     try {
