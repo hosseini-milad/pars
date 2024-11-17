@@ -11,6 +11,7 @@ const CartSchema = new Schema({
     manageId:{ type: String },
     payValue:{ type: String },
     stockId:{type:String},
+    branchId:{type:String},
     description:{type:String},
     discount:{type:String},
     totalPrice:{ type: String },

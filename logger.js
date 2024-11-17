@@ -170,7 +170,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./router/dashboard.js'],
+  apis: ['./router/*Doc.js'],
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
