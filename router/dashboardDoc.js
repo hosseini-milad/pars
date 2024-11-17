@@ -117,3 +117,32 @@
  *       500:
  *         description: Server error
  */
+/**
+ * @swagger
+ * /branch-stats:
+ *   get:
+ *     summary: Retrieve statistics for branches
+ *     security:
+ *       - ApiKeyAuth: []
+ *     responses:
+ *       200:
+ *         description: Statistics of distinct branches and their record percentages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   branches:
+ *                     type: integer
+ *                     description: The total number of distinct branches
+ *                   branchPercentages:
+ *                     type: object
+ *                     additionalProperties:
+ *                       type: number
+ *                       description: The percentage of records for each branch
+ *                     description: An object where keys are branch IDs and values are percentages of records
+ *       500:
+ *         description: Server error
+ */
