@@ -1,14 +1,36 @@
-
 /**
  * @swagger
  * /top-products:
  *   get:
- *     summary: Retrieve the top 5 products
+ *     summary: Retrieve the top 5 products by count or price
  *     security:
  *       - ApiKeyAuth: []
+ *     parameters:
+ *       - name: timeFilter
+ *         in: query
+ *         description: Filter data by time (day, week, month, year, all)
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month, year, all]
+ *           default: all
+ *       - name: branchId
+ *         in: query
+ *         description: Branch ID to filter
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: aggregateBy
+ *         in: query
+ *         description: Aggregate by count or price
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [count, price]
+ *           default: count
  *     responses:
  *       200:
- *         description: A list of top products with their quantities
+ *         description: A list of top 5 products with their total value
  *         content:
  *           application/json:
  *             schema:
@@ -16,27 +38,47 @@
  *               items:
  *                 type: object
  *                 properties:
- *                   ItemID:
- *                     type: string
- *                     description: Product ID
- *                   totalQuantitySold:
- *                     type: integer
- *                     description: Total quantity sold
- *                   title:
+ *                   _id:
  *                     type: string
  *                     description: Product title
+ *                   totalValue:
+ *                     type: number
+ *                     description: Total count or total price
  */
 
 /**
  * @swagger
  * /lowest-products:
  *   get:
- *     summary: Retrieve the lowest 5 products
+ *     summary: Retrieve the lowest 5 products by count or price
  *     security:
  *       - ApiKeyAuth: []
+ *     parameters:
+ *       - name: timeFilter
+ *         in: query
+ *         description: Filter data by time (day, week, month, year, all)
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month, year, all]
+ *           default: all
+ *       - name: branchId
+ *         in: query
+ *         description: Branch ID to filter
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: aggregateBy
+ *         in: query
+ *         description: Aggregate by count or price
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [count, price]
+ *           default: count
  *     responses:
  *       200:
- *         description: A list of lowest-selling products with their quantities
+ *         description: A list of lowest 5 products with their total value
  *         content:
  *           application/json:
  *             schema:
@@ -44,27 +86,96 @@
  *               items:
  *                 type: object
  *                 properties:
- *                   ItemID:
- *                     type: string
- *                     description: Product ID
- *                   title:
+ *                   _id:
  *                     type: string
  *                     description: Product title
- *                   totalQuantitySold:
- *                     type: integer
- *                     description: Total quantity sold
+ *                   totalValue:
+ *                     type: number
+ *                     description: Total count or total price
+ */
+
+/**
+ * @swagger
+ * /sales-process:
+ *   get:
+ *     summary: Retrieve sales data by date
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - name: timeFilter
+ *         in: query
+ *         description: Filter data by time (day, week, month, year, all)
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month, year, all]
+ *           default: all
+ *       - name: branchId
+ *         in: query
+ *         description: Branch ID to filter
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: aggregateBy
+ *         in: query
+ *         description: Aggregate by count or price
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [count, price]
+ *           default: count
+ *     responses:
+ *       200:
+ *         description: Sales data grouped by date
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   date:
+ *                     type: string
+ *                     format: date
+ *                     description: Date of sales
+ *                   totalSales:
+ *                     type: number
+ *                     description: Total sales value
  */
 
 /**
  * @swagger
  * /category-product-counts:
  *   get:
- *     summary: Retrieve the counts of products for each category
+ *     summary: Retrieve product counts per category
  *     security:
  *       - ApiKeyAuth: []
+ *     parameters:
+ *       - name: timeFilter
+ *         in: query
+ *         description: Filter data by time (day, week, month, year, all)
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month, year, all]
+ *           default: all
+ *       - name: branchId
+ *         in: query
+ *         description: Branch ID to filter
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: aggregateBy
+ *         in: query
+ *         description: Aggregate by count or price
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [count, price]
+ *           default: count
  *     responses:
  *       200:
- *         description: A list of categories with their product counts
+ *         description: A list of product counts per category
  *         content:
  *           application/json:
  *             schema:
@@ -74,27 +185,102 @@
  *                 properties:
  *                   categoryId:
  *                     type: string
- *                     description: The ID of the category
+ *                     description: Category ID
  *                   categoryName:
  *                     type: string
- *                     description: The name of the category
- *                   productCount:
- *                     type: integer
- *                     description: The number of products in the category
- *       500:
- *         description: Server error
+ *                     description: Category name
+ *                   totalValue:
+ *                     type: number
+ *                     description: Total count or price value
+ */
+
+/**
+ * @swagger
+ * /branch-stats:
+ *   get:
+ *     summary: Retrieve branch statistics
+ *     security:
+ *       - ApiKeyAuth: []
+ *     parameters:
+ *       - name: timeFilter
+ *         in: query
+ *         description: Filter data by time (day, week, month, year, all)
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month, year, all]
+ *           default: all
+ *       - name: aggregateBy
+ *         in: query
+ *         description: Aggregate by count or price
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [count, price]
+ *           default: count
+ *     responses:
+ *       200:
+ *         description: Branch statistics with total values and percentages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalBranches:
+ *                   type: integer
+ *                   description: Total number of branches
+ *                 totalValues:
+ *                   type: number
+ *                   description: Total aggregated value
+ *                 stats:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       branchId:
+ *                         type: integer
+ *                         description: Branch ID
+ *                       totalValue:
+ *                         type: number
+ *                         description: Total count or price value for the branch
+ *                       percentage:
+ *                         type: string
+ *                         description: Percentage of the total value
  */
 
 /**
  * @swagger
  * /product-categories:
  *   get:
- *     summary: Retrieve product details along with their categories
+ *     summary: Retrieve products and their categories
  *     security:
  *       - ApiKeyAuth: []
+ *     parameters:
+ *       - name: timeFilter
+ *         in: query
+ *         description: Filter data by time (day, week, month, year, all)
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [day, week, month, year, all]
+ *           default: all
+ *       - name: branchId
+ *         in: query
+ *         description: Branch ID to filter
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - name: aggregateBy
+ *         in: query
+ *         description: Aggregate by count or price
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [count, price]
+ *           default: count
  *     responses:
  *       200:
- *         description: A list of products with their associated categories
+ *         description: A list of products and their categories
  *         content:
  *           application/json:
  *             schema:
@@ -104,45 +290,17 @@
  *                 properties:
  *                   productId:
  *                     type: string
- *                     description: The ID of the product
+ *                     description: Product ID
  *                   productName:
  *                     type: string
- *                     description: The name of the product
+ *                     description: Product name
  *                   categoryId:
  *                     type: string
- *                     description: The ID of the associated category
+ *                     description: Category ID
  *                   categoryName:
  *                     type: string
- *                     description: The name of the associated category
- *       500:
- *         description: Server error
- */
-/**
- * @swagger
- * /branch-stats:
- *   get:
- *     summary: Retrieve statistics for branches
- *     security:
- *       - ApiKeyAuth: []
- *     responses:
- *       200:
- *         description: Statistics of distinct branches and their record percentages
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   branches:
- *                     type: integer
- *                     description: The total number of distinct branches
- *                   branchPercentages:
- *                     type: object
- *                     additionalProperties:
- *                       type: number
- *                       description: The percentage of records for each branch
- *                     description: An object where keys are branch IDs and values are percentages of records
- *       500:
- *         description: Server error
+ *                     description: Category name
+ *                   value:
+ *                     type: number
+ *                     description: Total count or price value
  */

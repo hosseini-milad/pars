@@ -1,190 +1,375 @@
 const express = require('express');
 const router = express.Router();
-const invoiceItems = require('../models/sepidar/invoiceItems');
-const products = require('../models/product/products'); 
-const categories = require('../models/product/category');
 const auth = require("../middleware/auth");
 const cart = require('../models/product/cart');
+const getTimeFilter = require('../middleware/timeFiltering');
 
-
-
-router.get('/top-products',auth, async (req, res) => {
+router.get('/top-products', auth, async (req, res) => {
     try {
-        const topProducts = await invoiceItems.aggregate([
-            { $unwind: "$InvoiceItems" },
+        const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
+        if (!branchId)
+            return res.status(400).json({ message: "branchId is required" });
+        if (!['count', 'price'].includes(aggregateBy))
+            return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
+
+        const dateFilter = getTimeFilter(timeFilter);
+        const branch = { branchId: Number(branchId) };
+
+        const countField = {
+            $convert: {
+                input: "$cartItems.count",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+        const priceField = {
+            $convert: {
+                input: "$cartItems.price",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+
+        const sumField = aggregateBy === 'price'
+            ? { $multiply: [countField, priceField] }
+            : countField;
+
+        const topCartItems = await cart.aggregate([
+            { $match: { ...dateFilter, ...branch } },
+            { $unwind: "$cartItems" },
             {
                 $group: {
-                    _id: "$InvoiceItems.ItemRef", 
-                    totalQuantitySold: { $sum: "$InvoiceItems.Quantity" } // Sum quantities within InvoiceItems
+                    _id: "$cartItems.title",
+                    totalValue: { $sum: sumField }
                 }
             },
-            { $sort: { totalQuantitySold: -1 } }, 
+            { $sort: { totalValue: -1 } },
             { $limit: 5 }
         ]);
 
-        const productIds = topProducts.map(item => item._id);
-        
-        const productsData = await products.find(
-            { ItemID: { $in: productIds } },
-            { ItemID: 1, title: 1 } 
-        );
-
-        const response = topProducts.map(item => {
-            const product = productsData.find(p => p.ItemID.toString() === item._id.toString());
-            return {
-                ItemID: item._id,
-                title: product ? product.title : "Unknown Product",
-                totalQuantitySold: item.totalQuantitySold // Include total quantity sold in the response
-            };
-        });
-
-        res.json(response);
+        res.json({ data: topCartItems });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-router.get('/lowest-products',auth, async (req, res) => {
+router.get('/lowest-products', auth, async (req, res) => {
     try {
-        const lowestProducts = await invoiceItems.aggregate([
-            { $unwind: "$InvoiceItems" },
+        const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
+        if (!branchId)
+            return res.status(400).json({ message: "branchId is required" });
+        if (!['count', 'price'].includes(aggregateBy))
+            return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
+
+        const dateFilter = getTimeFilter(timeFilter);
+        const branch = { branchId: Number(branchId) };
+
+        const countField = {
+            $convert: {
+                input: "$cartItems.count",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+        const priceField = {
+            $convert: {
+                input: "$cartItems.price",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+
+        const sumField = aggregateBy === 'price'
+            ? { $multiply: [countField, priceField] }
+            : countField;
+
+        const lowestCartItems = await cart.aggregate([
+            { $match: { ...dateFilter, ...branch } },
+            { $unwind: "$cartItems" },
             {
                 $group: {
-                    _id: "$InvoiceItems.ItemRef", 
-                    totalQuantitySold: { $sum: "$InvoiceItems.Quantity" } 
+                    _id: "$cartItems.title",
+                    totalValue: { $sum: sumField }
                 }
             },
-            { $sort: { totalQuantitySold: 1 } }, 
-            { $limit: 5 } 
+            { $sort: { totalValue: 1 } },
+            { $limit: 5 }
         ]);
 
-        const productIds = lowestProducts.map(item => item._id);
-        
-        const productsData = await products.find(
-            { ItemID: { $in: productIds } },
-            { ItemID: 1, title: 1 } 
-        );
-
-        const response = lowestProducts.map(item => {
-            const product = productsData.find(p => p.ItemID.toString() === item._id.toString());
-            return {
-                ItemID: item._id,
-                title: product ? product.title : "Unknown Product",
-                totalQuantitySold: item.totalQuantitySold // Include total quantity sold in the response
-            };
-        });
-
-        res.json(response);
+        res.json({ data: lowestCartItems });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-
-router.get('/branch-stats',auth, async (req, res) => {
+router.get('/sales-process', auth, async (req, res) => {
     try {
-        // Get distinct branchIds
-        const distinctBranches = await cart.distinct("branchId");
+        const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
+        if (!branchId)
+            return res.status(400).json({ message: "branchId is required" });
+        if (!['count', 'price'].includes(aggregateBy))
+            return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
 
-        // Get branch counts
-        const branchCounts = await cart.aggregate([
+        const dateFilter = getTimeFilter(timeFilter);
+        const branch = { branchId: Number(branchId) };
+
+        const countField = {
+            $convert: {
+                input: "$cartItems.count",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+        const priceField = {
+            $convert: {
+                input: "$cartItems.price",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+
+        const sumField = aggregateBy === 'price'
+            ? { $multiply: [countField, priceField] }
+            : countField;
+
+        const salesProcess = await cart.aggregate([
+            { $match: { ...dateFilter, ...branch } },
+            { $unwind: "$cartItems" },
             {
                 $group: {
-                    _id: "$branchId", // Group by branchId
-                    count: { $sum: 1 } // Count occurrences of each branchId
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$initDate" } },
+                    totalSales: { $sum: sumField }
                 }
-            }
+            },
+            { $sort: { _id: 1 } }
         ]);
 
-        // Total records for percentage calculation
-        const totalRecords = branchCounts.reduce((sum, branch) => sum + branch.count, 0);
-
-        // Prepare percentage stats
-        const percentageStats = branchCounts.map(branch => ({
-            branchId: branch._id,
-            percentage: ((branch.count / totalRecords) * 100).toFixed(2) // Calculate percentage
+        const response = salesProcess.map(record => ({
+            date: record._id,
+            totalSales: record.totalSales
         }));
 
-        const response = [
-            { branches: distinctBranches.length }, // Total distinct branches
-            Object.fromEntries(percentageStats.map(stat => [stat.branchId, parseFloat(stat.percentage)])) // Percentage per branch
-        ];
+        res.json({ data: response });
 
-        res.json(response);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-router.get('/product-categories',auth, async (req, res) => {
+router.get('/category-product-counts', auth, async (req, res) => {
     try {
-        // Aggregate query to join products with categories
-        const productCategories = await products.aggregate([
-            {
-                $lookup: {
-                    from: "categories", // Collection to join
-                    localField: "catId", // Field in products
-                    foreignField: "catCode", // Field in categories
-                    as: "categoryDetails" // Resulting array field
-                }
-            },
-            {
-                $unwind: "$categoryDetails" // Unwind the category details for easier access
-            },
-            {
-                $project: {
-                    _id: 0, // Exclude internal MongoDB ID
-                    productId: "$ItemID", // Map the product ID
-                    productName: "$title", // Map the product title
-                    categoryId: "$categoryDetails.catCode", // Map the category code
-                    categoryName: "$categoryDetails.name" // Map the category name
-                }
+        const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
+        if (!branchId)
+            return res.status(400).json({ message: "branchId is required" });
+        if (!['count', 'price'].includes(aggregateBy))
+            return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
+
+        const dateFilter = getTimeFilter(timeFilter);
+        const branch = { branchId: Number(branchId) };
+
+        const countField = {
+            $convert: {
+                input: "$cartItems.count",
+                to: "double",
+                onError: 0,
+                onNull: 0
             }
-        ]);
+        };
+        const priceField = {
+            $convert: {
+                input: "$cartItems.price",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
 
-        res.json(productCategories);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+        const sumField = aggregateBy === 'price'
+            ? { $multiply: [countField, priceField] }
+            : countField;
 
-router.get('/category-product-counts',auth, async (req, res) => {
-    try {
-        // Aggregate query to join products with categories and count products per category
-        const categoryProductCounts = await products.aggregate([
+        const categoryProductCounts = await cart.aggregate([
+            { $match: { ...dateFilter, ...branch } },
+            { $unwind: "$cartItems" },
             {
                 $lookup: {
-                    from: "categories", // Collection to join
-                    localField: "catId", // Field in products
-                    foreignField: "catCode", // Field in categories
-                    as: "categoryDetails" // Resulting array field
+                    from: "products",
+                    localField: "cartItems.id",
+                    foreignField: "ItemID",
+                    as: "productDetails"
                 }
             },
+            { $unwind: "$productDetails" },
             {
-                $unwind: "$categoryDetails" // Unwind the category details for easier access
+                $lookup: {
+                    from: "categories",
+                    localField: "productDetails.catId",
+                    foreignField: "catCode",
+                    as: "categoryDetails"
+                }
             },
+            { $unwind: "$categoryDetails" },
             {
                 $group: {
-                    _id: "$categoryDetails.catCode", // Group by category code
-                    categoryName: { $first: "$categoryDetails.title" }, // Get the category name
-                    productCount: { $sum: 1 } // Count the number of products
+                    _id: "$categoryDetails.catCode",
+                    categoryName: { $first: "$categoryDetails.title" },
+                    totalValue: { $sum: sumField }
                 }
             },
             {
                 $project: {
-                    _id: 0, // Exclude internal MongoDB ID
-                    categoryId: "$_id", // Map the category code
-                    categoryName: 1, // Include the category name
-                    productCount: 1 // Include the count of products
+                    _id: 0,
+                    categoryId: "$_id",
+                    categoryName: 1,
+                    totalValue: 1
                 }
             }
         ]);
 
-        res.json(categoryProductCounts);
+        res.json({ data: categoryProductCounts });
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
+router.get('/branch-stats', auth, async (req, res) => {
+    try {
+        const { timeFilter = 'all', aggregateBy = 'count' } = req.query;
+        if (!['count', 'price'].includes(aggregateBy))
+            return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
+
+        const dateFilter = getTimeFilter(timeFilter);
+
+        const countField = {
+            $convert: {
+                input: "$cartItems.count",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+        const priceField = {
+            $convert: {
+                input: "$cartItems.price",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+
+        const sumField = aggregateBy === 'price'
+            ? { $multiply: [countField, priceField] }
+            : countField;
+
+        const branchStats = await cart.aggregate([
+            { $match: { ...dateFilter } },
+            { $unwind: "$cartItems" },
+            {
+                $group: {
+                    _id: "$branchId",
+                    totalValue: { $sum: sumField }
+                }
+            }
+        ]);
+
+        const totalValues = branchStats.reduce((sum, branch) => sum + branch.totalValue, 0);
+
+        const percentageStats = branchStats.map(branch => ({
+            branchId: branch._id,
+            totalValue: branch.totalValue,
+            percentage: ((branch.totalValue / totalValues) * 100).toFixed(2)
+        }));
+
+        const response = {
+            totalBranches: branchStats.length,
+            totalValues,
+            stats: percentageStats
+        };
+
+        res.json({ data: response });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.get('/product-categories', auth, async (req, res) => {
+    try {
+        const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
+        if (!branchId)
+            return res.status(400).json({ message: "branchId is required" });
+        if (!['count', 'price'].includes(aggregateBy))
+            return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
+
+        const dateFilter = getTimeFilter(timeFilter);
+        const branch = { branchId: Number(branchId) };
+
+        const countField = {
+            $convert: {
+                input: "$cartItems.count",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+        const priceField = {
+            $convert: {
+                input: "$cartItems.price",
+                to: "double",
+                onError: 0,
+                onNull: 0
+            }
+        };
+
+        const sumField = aggregateBy === 'price'
+            ? { $multiply: [countField, priceField] }
+            : countField;
+
+        const productCategories = await cart.aggregate([
+            { $match: { ...dateFilter, ...branch } },
+            { $unwind: "$cartItems" },
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "cartItems.id",
+                    foreignField: "ItemID",
+                    as: "productDetails"
+                }
+            },
+            { $unwind: "$productDetails" },
+            {
+                $lookup: {
+                    from: "categories",
+                    localField: "productDetails.catId",
+                    foreignField: "catCode",
+                    as: "categoryDetails"
+                }
+            },
+            { $unwind: "$categoryDetails" },
+            {
+                $project: {
+                    _id: 0,
+                    productId: "$productDetails.ItemID",
+                    productName: "$productDetails.title",
+                    categoryId: "$categoryDetails.catCode",
+                    categoryName: "$categoryDetails.name",
+                    value: sumField
+                }
+            }
+        ]);
+
+        res.json({ data: productCategories });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;
