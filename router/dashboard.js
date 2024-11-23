@@ -4,16 +4,16 @@ const auth = require("../middleware/auth");
 const cart = require('../models/product/cart');
 const getTimeFilter = require('../middleware/timeFiltering');
 
+const getBranchFilter = (branchId) => branchId ? { branchId: Number(branchId) } : {};
+
 router.get('/top-products', auth, async (req, res) => {
     try {
         const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
-        if (!branchId)
-            return res.status(400).json({ message: "branchId is required" });
         if (!['count', 'price'].includes(aggregateBy))
             return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
 
         const dateFilter = getTimeFilter(timeFilter);
-        const branch = { branchId: Number(branchId) };
+        const branch = getBranchFilter(branchId);
 
         const countField = {
             $convert: {
@@ -58,13 +58,11 @@ router.get('/top-products', auth, async (req, res) => {
 router.get('/lowest-products', auth, async (req, res) => {
     try {
         const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
-        if (!branchId)
-            return res.status(400).json({ message: "branchId is required" });
         if (!['count', 'price'].includes(aggregateBy))
             return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
 
         const dateFilter = getTimeFilter(timeFilter);
-        const branch = { branchId: Number(branchId) };
+        const branch = getBranchFilter(branchId);
 
         const countField = {
             $convert: {
@@ -109,13 +107,11 @@ router.get('/lowest-products', auth, async (req, res) => {
 router.get('/sales-process', auth, async (req, res) => {
     try {
         const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
-        if (!branchId)
-            return res.status(400).json({ message: "branchId is required" });
         if (!['count', 'price'].includes(aggregateBy))
             return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
 
         const dateFilter = getTimeFilter(timeFilter);
-        const branch = { branchId: Number(branchId) };
+        const branch = getBranchFilter(branchId);
 
         const countField = {
             $convert: {
@@ -165,13 +161,11 @@ router.get('/sales-process', auth, async (req, res) => {
 router.get('/category-product-counts', auth, async (req, res) => {
     try {
         const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
-        if (!branchId)
-            return res.status(400).json({ message: "branchId is required" });
         if (!['count', 'price'].includes(aggregateBy))
             return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
 
         const dateFilter = getTimeFilter(timeFilter);
-        const branch = { branchId: Number(branchId) };
+        const branch = getBranchFilter(branchId);
 
         const countField = {
             $convert: {
@@ -303,13 +297,11 @@ router.get('/branch-stats', auth, async (req, res) => {
 router.get('/product-categories', auth, async (req, res) => {
     try {
         const { timeFilter = 'all', branchId, aggregateBy = 'count' } = req.query;
-        if (!branchId)
-            return res.status(400).json({ message: "branchId is required" });
         if (!['count', 'price'].includes(aggregateBy))
             return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
 
         const dateFilter = getTimeFilter(timeFilter);
-        const branch = { branchId: Number(branchId) };
+        const branch = getBranchFilter(branchId);
 
         const countField = {
             $convert: {

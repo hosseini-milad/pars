@@ -16,8 +16,8 @@
  *           default: all
  *       - name: branchId
  *         in: query
- *         description: Branch ID to filter
- *         required: true
+ *         description: Branch ID to filter (optional)
+ *         required: false
  *         schema:
  *           type: integer
  *       - name: aggregateBy
@@ -64,8 +64,8 @@
  *           default: all
  *       - name: branchId
  *         in: query
- *         description: Branch ID to filter
- *         required: true
+ *         description: Branch ID to filter (optional)
+ *         required: false
  *         schema:
  *           type: integer
  *       - name: aggregateBy
@@ -112,8 +112,8 @@
  *           default: all
  *       - name: branchId
  *         in: query
- *         description: Branch ID to filter
- *         required: true
+ *         description: Branch ID to filter (optional)
+ *         required: false
  *         schema:
  *           type: integer
  *       - name: aggregateBy
@@ -161,8 +161,8 @@
  *           default: all
  *       - name: branchId
  *         in: query
- *         description: Branch ID to filter
- *         required: true
+ *         description: Branch ID to filter (optional)
+ *         required: false
  *         schema:
  *           type: integer
  *       - name: aggregateBy
@@ -266,8 +266,8 @@
  *           default: all
  *       - name: branchId
  *         in: query
- *         description: Branch ID to filter
- *         required: true
+ *         description: Branch ID to filter (optional)
+ *         required: false
  *         schema:
  *           type: integer
  *       - name: aggregateBy
