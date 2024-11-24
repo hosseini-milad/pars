@@ -41,7 +41,7 @@ router.get('/top-products', auth, async (req, res) => {
             { $unwind: "$cartItems" },
             {
                 $group: {
-                    title: "$cartItems.title",
+                    _id: "$cartItems.title",
                     totalValue: { $sum: sumField }
                 }
             },
@@ -49,11 +49,17 @@ router.get('/top-products', auth, async (req, res) => {
             { $limit: 5 }
         ]);
 
-        res.json({ data: topCartItems });
+        const transformedData = topCartItems.map(item => ({
+            title: item._id,
+            totalValue: item.totalValue
+        }));
+
+        res.json({ data: transformedData });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 router.get('/lowest-products', auth, async (req, res) => {
     try {
@@ -90,7 +96,7 @@ router.get('/lowest-products', auth, async (req, res) => {
             { $unwind: "$cartItems" },
             {
                 $group: {
-                    title: "$cartItems.title",
+                    _id: "$cartItems.title",
                     totalValue: { $sum: sumField }
                 }
             },
@@ -98,11 +104,17 @@ router.get('/lowest-products', auth, async (req, res) => {
             { $limit: 5 }
         ]);
 
-        res.json({ data: lowestCartItems });
+        const transformedData = lowestCartItems.map(item => ({
+            title: item._id,
+            totalValue: item.totalValue
+        }));
+
+        res.json({ data: transformedData });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 router.get('/sales-process', auth, async (req, res) => {
     try {
