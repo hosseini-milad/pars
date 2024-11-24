@@ -38,7 +38,7 @@
  *               items:
  *                 type: object
  *                 properties:
- *                   _id:
+ *                   title:
  *                     type: string
  *                     description: Product title
  *                   totalValue:
@@ -86,7 +86,7 @@
  *               items:
  *                 type: object
  *                 properties:
- *                   _id:
+ *                   title:
  *                     type: string
  *                     description: Product title
  *                   totalValue:

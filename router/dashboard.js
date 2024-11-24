@@ -41,7 +41,7 @@ router.get('/top-products', auth, async (req, res) => {
             { $unwind: "$cartItems" },
             {
                 $group: {
-                    _id: "$cartItems.title",
+                    title: "$cartItems.title",
                     totalValue: { $sum: sumField }
                 }
             },
@@ -90,7 +90,7 @@ router.get('/lowest-products', auth, async (req, res) => {
             { $unwind: "$cartItems" },
             {
                 $group: {
-                    _id: "$cartItems.title",
+                    title: "$cartItems.title",
                     totalValue: { $sum: sumField }
                 }
             },
