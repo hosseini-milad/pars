@@ -34,19 +34,22 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     description: Product ID
- *                   title:
- *                     type: string
- *                     description: Product title
- *                   totalValue:
- *                     type: number
- *                     description: Total count or total price
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Product ID
+ *                       title:
+ *                         type: string
+ *                         description: Product title
+ *                       totalValue:
+ *                         type: number
+ *                         description: Total count or total price
  */
 
 /**
@@ -85,19 +88,22 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     description: Product ID
- *                   title:
- *                     type: string
- *                     description: Product title
- *                   totalValue:
- *                     type: number
- *                     description: Total count or total price
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Product ID
+ *                       title:
+ *                         type: string
+ *                         description: Product title
+ *                       totalValue:
+ *                         type: number
+ *                         description: Total count or total price
  */
 
 /**
@@ -136,20 +142,23 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     description: Sales record ID (date)
- *                   date:
- *                     type: string
- *                     format: date
- *                     description: Date of sales
- *                   totalSales:
- *                     type: number
- *                     description: Total sales value
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Cart number (cartNo)
+ *                       date:
+ *                         type: string
+ *                         format: date
+ *                         description: Date of sales
+ *                       totalSales:
+ *                         type: number
+ *                         description: Total sales value
  */
 
 /**
@@ -188,19 +197,22 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     description: Category ID
- *                   categoryName:
- *                     type: string
- *                     description: Category name
- *                   totalValue:
- *                     type: number
- *                     description: Total count or price value
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         description: Category ID
+ *                       categoryName:
+ *                         type: string
+ *                         description: Category name
+ *                       totalValue:
+ *                         type: number
+ *                         description: Total count or price value
  */
 
 /**
@@ -235,26 +247,32 @@
  *             schema:
  *               type: object
  *               properties:
- *                 totalBranches:
- *                   type: integer
- *                   description: Total number of branches
- *                 totalValues:
- *                   type: number
- *                   description: Total aggregated value
- *                 stats:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: string
- *                         description: Branch ID
- *                       totalValue:
- *                         type: number
- *                         description: Total count or price value for the branch
- *                       percentage:
- *                         type: string
- *                         description: Percentage of the total value
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalBranches:
+ *                       type: integer
+ *                       description: Total number of branches
+ *                     totalValues:
+ *                       type: number
+ *                       description: Total aggregated value
+ *                     stats:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             description: Branch ID
+ *                           totalValue:
+ *                             type: number
+ *                             description: Total count or price value for the branch
+ *                           percentage:
+ *                             type: string
+ *                             description: Percentage of the total value
+ *                           name:
+ *                             type: string
+ *                             description: Branch name
  */
 
 /**
@@ -293,26 +311,26 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     description: Unique record ID
- *                   productId:
- *                     type: string
- *                     description: Product ID
- *                   productName:
- *                     type: string
- *                     description: Product name
- *                   categoryId:
- *                     type: string
- *                     description: Category ID
- *                   categoryName:
- *                     type: string
- *                     description: Category name
- *                   value:
- *                     type: number
- *                     description: Total count or price value
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       productId:
+ *                         type: string
+ *                         description: Product ID
+ *                       productName:
+ *                         type: string
+ *                         description: Product name
+ *                       categoryId:
+ *                         type: string
+ *                         description: Category ID
+ *                       categoryName:
+ *                         type: string
+ *                         description: Category name
+ *                       value:
+ *                         type: number
+ *                         description: Total count or price value
  */

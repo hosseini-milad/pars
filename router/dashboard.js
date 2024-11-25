@@ -41,7 +41,10 @@ router.get('/top-products', auth, async (req, res) => {
             { $unwind: "$cartItems" },
             {
                 $group: {
-                    _id: "$cartItems.title",
+                    _id: {
+                        id: "$cartItems.id",
+                        title: "$cartItems.title"
+                    },
                     totalValue: { $sum: sumField }
                 }
             },
@@ -50,7 +53,8 @@ router.get('/top-products', auth, async (req, res) => {
         ]);
 
         const transformedData = topCartItems.map(item => ({
-            title: item._id,
+            id: item._id.id,
+            title: item._id.title,
             totalValue: item.totalValue
         }));
 
@@ -96,7 +100,10 @@ router.get('/lowest-products', auth, async (req, res) => {
             { $unwind: "$cartItems" },
             {
                 $group: {
-                    _id: "$cartItems.title",
+                    _id: {
+                        id: "$cartItems.id", 
+                        title: "$cartItems.title"
+                    },
                     totalValue: { $sum: sumField }
                 }
             },
@@ -105,7 +112,8 @@ router.get('/lowest-products', auth, async (req, res) => {
         ]);
 
         const transformedData = lowestCartItems.map(item => ({
-            title: item._id,
+            id: item._id.id, // Unique identifier
+            title: item._id.title,
             totalValue: item.totalValue
         }));
 
@@ -151,24 +159,25 @@ router.get('/sales-process', auth, async (req, res) => {
             { $unwind: "$cartItems" },
             {
                 $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$initDate" } },
+                    _id: { date: { $dateToString: { format: "%Y-%m-%d", date: "$initDate" } }, cartNo: "$cartNo" }, // Include cartNo and date
                     totalSales: { $sum: sumField }
                 }
             },
-            { $sort: { _id: 1 } }
+            { $sort: { "_id.date": 1 } } // Sort by date
         ]);
 
         const response = salesProcess.map(record => ({
-            date: record._id,
+            id: record._id.cartNo, // Use cartNo as the id
+            date: record._id.date, // Include date for reference
             totalSales: record.totalSales
         }));
 
         res.json({ data: response });
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
+
 
 router.get('/category-product-counts', auth, async (req, res) => {
     try {
@@ -288,9 +297,11 @@ router.get('/branch-stats', auth, async (req, res) => {
         const totalValues = branchStats.reduce((sum, branch) => sum + branch.totalValue, 0);
 
         const percentageStats = branchStats.map(branch => ({
+            id: branch._id,
             branchId: branch._id,
             totalValue: branch.totalValue,
-            percentage: ((branch.totalValue / totalValues) * 100).toFixed(2)
+            percentage: ((branch.totalValue / totalValues) * 100).toFixed(2),
+            name:"شعبه تست"
         }));
 
         const response = {
@@ -300,7 +311,6 @@ router.get('/branch-stats', auth, async (req, res) => {
         };
 
         res.json({ data: response });
-
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
