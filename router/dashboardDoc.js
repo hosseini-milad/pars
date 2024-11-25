@@ -38,6 +38,9 @@
  *               items:
  *                 type: object
  *                 properties:
+ *                   id:
+ *                     type: string
+ *                     description: Product ID
  *                   title:
  *                     type: string
  *                     description: Product title
@@ -86,6 +89,9 @@
  *               items:
  *                 type: object
  *                 properties:
+ *                   id:
+ *                     type: string
+ *                     description: Product ID
  *                   title:
  *                     type: string
  *                     description: Product title
@@ -134,6 +140,9 @@
  *               items:
  *                 type: object
  *                 properties:
+ *                   id:
+ *                     type: string
+ *                     description: Sales record ID (date)
  *                   date:
  *                     type: string
  *                     format: date
@@ -183,7 +192,7 @@
  *               items:
  *                 type: object
  *                 properties:
- *                   categoryId:
+ *                   id:
  *                     type: string
  *                     description: Category ID
  *                   categoryName:
@@ -237,8 +246,8 @@
  *                   items:
  *                     type: object
  *                     properties:
- *                       branchId:
- *                         type: integer
+ *                       id:
+ *                         type: string
  *                         description: Branch ID
  *                       totalValue:
  *                         type: number
@@ -288,6 +297,9 @@
  *               items:
  *                 type: object
  *                 properties:
+ *                   id:
+ *                     type: string
+ *                     description: Unique record ID
  *                   productId:
  *                     type: string
  *                     description: Product ID
