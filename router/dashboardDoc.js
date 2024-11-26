@@ -268,7 +268,7 @@
  *                             type: number
  *                             description: Total count or price value for the branch
  *                           percentage:
- *                             type: string
+ *                             type: number
  *                             description: Percentage of the total value
  *                           name:
  *                             type: string

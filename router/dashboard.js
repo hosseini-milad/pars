@@ -254,67 +254,67 @@ router.get('/category-product-counts', auth, async (req, res) => {
     }
 });
 
-router.get('/branch-stats', auth, async (req, res) => {
-    try {
-        const { timeFilter = 'all', aggregateBy = 'count' } = req.query;
-        if (!['count', 'price'].includes(aggregateBy))
-            return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
+    router.get('/branch-stats', auth, async (req, res) => {
+        try {
+            const { timeFilter = 'all', aggregateBy = 'count' } = req.query;
+            if (!['count', 'price'].includes(aggregateBy))
+                return res.status(400).json({ message: "aggregateBy must be 'count' or 'price'" });
 
-        const dateFilter = getTimeFilter(timeFilter);
+            const dateFilter = getTimeFilter(timeFilter);
 
-        const countField = {
-            $convert: {
-                input: "$cartItems.count",
-                to: "double",
-                onError: 0,
-                onNull: 0
-            }
-        };
-        const priceField = {
-            $convert: {
-                input: "$cartItems.price",
-                to: "double",
-                onError: 0,
-                onNull: 0
-            }
-        };
-
-        const sumField = aggregateBy === 'price'
-            ? { $multiply: [countField, priceField] }
-            : countField;
-
-        const branchStats = await cart.aggregate([
-            { $match: { ...dateFilter } },
-            { $unwind: "$cartItems" },
-            {
-                $group: {
-                    _id: "$branchId",
-                    totalValue: { $sum: sumField }
+            const countField = {
+                $convert: {
+                    input: "$cartItems.count",
+                    to: "double",
+                    onError: 0,
+                    onNull: 0
                 }
-            }
-        ]);
+            };
+            const priceField = {
+                $convert: {
+                    input: "$cartItems.price",
+                    to: "double",
+                    onError: 0,
+                    onNull: 0
+                }
+            };
 
-        const totalValues = branchStats.reduce((sum, branch) => sum + branch.totalValue, 0);
+            const sumField = aggregateBy === 'price'
+                ? { $multiply: [countField, priceField] }
+                : countField;
 
-        const percentageStats = branchStats.map(branch => ({
-            id: branch._id,
-            branchId: branch._id,
-            totalValue: branch.totalValue,
-            percentage: ((branch.totalValue / totalValues) * 100).toFixed(2),
-            name:"شعبه تست"
-        }));
+            const branchStats = await cart.aggregate([
+                { $match: { ...dateFilter } },
+                { $unwind: "$cartItems" },
+                {
+                    $group: {
+                        _id: "$branchId",
+                        totalValue: { $sum: sumField }
+                    }
+                }
+            ]);
 
-        const response = {
-            totalBranches: branchStats.length,
-            totalValues,
-            stats: percentageStats
-        };
+            const totalValues = branchStats.reduce((sum, branch) => sum + branch.totalValue, 0);
 
-        res.json({ data: response });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
+            const percentageStats = branchStats.map(branch => ({
+                id: branch._id,
+                branchId: branch._id,
+                totalValue: branch.totalValue,
+                percentage: Math.round((branch.totalValue / totalValues) * 100 * 100) / 100, 
+                name:"شعبه تست"
+            }));
+
+            const response = {
+                totalBranches: branchStats.length,
+                totalValues,
+                stats: percentageStats
+            };
+
+            res.json({ data: response });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    });
 
 router.get('/product-categories', auth, async (req, res) => {
     try {
